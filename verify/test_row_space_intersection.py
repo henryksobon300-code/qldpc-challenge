@@ -59,7 +59,6 @@ def test_global_x_z_exchange_does_not_change_it():
     assert dim(hx, hz) == dim(hz, hx)
 
 
-
 def _load_code(slug):
     path = os.path.join(_ROOT, "codes", f"{slug}.json")
     if not os.path.exists(path):
