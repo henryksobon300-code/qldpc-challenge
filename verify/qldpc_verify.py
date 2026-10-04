@@ -57,8 +57,9 @@ What "verified" means per field:
               track or score reads it.
   diagnostics computed, never ranked (issue #1844): per side, the Tanner-graph
               girth, row and column weight profiles, and bounded trapping-set
-              counts, all read off H; for a laid-out code, the Euclidean
-              support diameter of each stored distance witness. Reported under
+              counts and, for CSS codes, the row-space intersection dimension,
+              all read off H; for a laid-out code, the Euclidean support
+              diameter of each stored distance witness. Reported under
               computed.diagnostics as evidence; no verdict depends on them.
 """
 
@@ -504,15 +505,18 @@ def css_fingerprint(HX, HZ):
     return hashlib.sha256(fp).hexdigest()[:16]
 
 
-def css_row_space_intersection_dimension(HX, HZ):
+def css_row_space_intersection_dimension(HX, HZ, rank_HX=None, rank_HZ=None):
     """Return dim(row(HX) intersection row(HZ)) over GF(2).
 
     This is invariant under generator-basis changes, qubit permutations, and
     exchanging X and Z. Different values therefore rule out equivalence under
     those transformations; equal values do not establish equivalence.
+
+    Precomputed ranks may be supplied by verifier callers that already have
+    them; standalone callers get the same result with ranks computed here.
     """
-    rx = gf2.rank(HX)
-    rz = gf2.rank(HZ)
+    rx = gf2.rank(HX) if rank_HX is None else rank_HX
+    rz = gf2.rank(HZ) if rank_HZ is None else rank_HZ
     return int(rx + rz - gf2.rank(np.vstack((HX, HZ))))
 
 
@@ -1269,7 +1273,7 @@ def _verify_semantic(doc, report, record, refute=False, seed=None):
                               "candidate_cap": TS_MAX_CANDIDATES}}
     if not stab:
         diag["row_space_intersection_dimension"] = (
-            css_row_space_intersection_dimension(HX, HZ)
+            css_row_space_intersection_dimension(HX, HZ, rx, rz)
         )
     diag_sides = (("S", supports),) if stab else (
         ("X", doc["checks"]["X"]), ("Z", doc["checks"]["Z"]))
